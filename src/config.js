@@ -43,8 +43,10 @@ const config = {
   // Debug
   enableDebugEndpoints: process.env.ENABLE_DEBUG_ENDPOINTS === 'true',
 
-  // Instance identification
-  instanceId: os.hostname(),
+  // Instance identification: container replica name in Azure Container Apps, or hostname locally
+  get instanceId() {
+    return process.env.CONTAINER_APP_REPLICA_NAME || os.hostname();
+  },
 
   // Derived
   get maxUploadBytes() {

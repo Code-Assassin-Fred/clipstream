@@ -701,7 +701,8 @@
   async function updateFooter() {
     try {
       const info = await api('/info');
-      footerInstance.textContent = 'Instance: ' + info.instanceId;
+      const shortId = info.instanceId ? String(info.instanceId).slice(-5) : 'unknown';
+      footerInstance.textContent = 'Instance: ' + shortId;
       footerMode.textContent = 'Mode: ' + info.mode;
     } catch (_e) {
       // Silently fail footer updates

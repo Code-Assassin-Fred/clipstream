@@ -21,6 +21,21 @@ describe('Health and Info Endpoints', () => {
       const res = await request(app).get('/health');
       expect(res.headers['x-instance-id']).toBeDefined();
     });
+
+    test('uses CONTAINER_APP_REPLICA_NAME for X-Instance-Id when set', async () => {
+      const prevReplica = process.env.CONTAINER_APP_REPLICA_NAME;
+      process.env.CONTAINER_APP_REPLICA_NAME = 'ca-replica-xyz12';
+      try {
+        const res = await request(app).get('/health');
+        expect(res.headers['x-instance-id']).toBe('ca-replica-xyz12');
+      } finally {
+        if (prevReplica !== undefined) {
+          process.env.CONTAINER_APP_REPLICA_NAME = prevReplica;
+        } else {
+          delete process.env.CONTAINER_APP_REPLICA_NAME;
+        }
+      }
+    });
   });
 
   describe('GET /ready', () => {
@@ -69,6 +84,22 @@ describe('Health and Info Endpoints', () => {
           process.env.APP_VERSION = prevVersion;
         } else {
           delete process.env.APP_VERSION;
+        }
+      }
+    });
+
+    test('returns CONTAINER_APP_REPLICA_NAME in info when set', async () => {
+      const prevReplica = process.env.CONTAINER_APP_REPLICA_NAME;
+      process.env.CONTAINER_APP_REPLICA_NAME = 'ca-replica-abc99';
+      try {
+        const res = await request(app).get('/api/info');
+        expect(res.status).toBe(200);
+        expect(res.body.instanceId).toBe('ca-replica-abc99');
+      } finally {
+        if (prevReplica !== undefined) {
+          process.env.CONTAINER_APP_REPLICA_NAME = prevReplica;
+        } else {
+          delete process.env.CONTAINER_APP_REPLICA_NAME;
         }
       }
     });
