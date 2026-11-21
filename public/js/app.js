@@ -40,6 +40,7 @@
   const activeFilters = $('#activeFilters');
   const footerInstance = $('#footerInstance');
   const footerMode = $('#footerMode');
+  const footerVersion = $('#footerVersion');
 
   // =========================================
   // API Helpers
@@ -701,9 +702,12 @@
   async function updateFooter() {
     try {
       const info = await api('/info');
-      const shortId = info.instanceId ? String(info.instanceId).slice(-5) : 'unknown';
+      const shortId = info.instanceId ? String(info.instanceId).slice(-6) : 'unknown';
       footerInstance.textContent = 'Instance: ' + shortId;
       footerMode.textContent = 'Mode: ' + info.mode;
+      if (footerVersion && info.version) {
+        footerVersion.textContent = 'ClipStream ' + info.version;
+      }
     } catch (_e) {
       // Silently fail footer updates
     }
