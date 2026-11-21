@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClipStream</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-left">
+      <h1 class="logo">🎬 ClipStream</h1>
+    </div>
+    <div class="header-center">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search videos..." aria-label="Search videos">
+        <button id="searchBtn" aria-label="Search">🔍</button>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="feed-toggle">
+        <button id="newBtn" class="toggle-btn active" aria-label="New videos">New</button>
+        <button id="trendingBtn" class="toggle-btn" aria-label="Trending videos">Trending</button>
+      </div>
+      <a href="#" id="myVideosLink" class="nav-link" style="display:none;">My Videos</a>
+      <div id="userInfo" class="user-info">
+        <span id="userName"></span>
+        <a href="/.auth/login/aad" id="signInLink" class="nav-link" style="display:none;">Sign In</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <!-- Active Filters -->
+    <div id="activeFilters" class="active-filters" style="display:none;"></div>
+
+    <!-- Upload Form -->
+    <section id="uploadSection" class="upload-section">
+      <button id="toggleUpload" class="btn btn-primary">📤 Upload Video</button>
+      <form id="uploadForm" class="upload-form" style="display:none;">
+        <div class="form-group">
+          <label for="uploadTitle">Title *</label>
+          <input type="text" id="uploadTitle" maxlength="100" required placeholder="Video title">
+        </div>
+        <div class="form-group">
+          <label for="uploadDesc">Description</label>
+          <textarea id="uploadDesc" maxlength="500" placeholder="Describe your video"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="uploadTags">Tags (comma-separated, max 5)</label>
+          <input type="text" id="uploadTags" placeholder="e.g. coding, music, tutorial">
+        </div>
+        <div class="form-group">
+          <label for="uploadFile">Video File (MP4 or WebM) *</label>
+          <input type="file" id="uploadFile" accept="video/mp4,video/webm" required>
+        </div>
+        <div id="uploadProgress" class="progress-bar" style="display:none;">
+          <div class="progress-fill" id="progressFill"></div>
+          <span class="progress-text" id="progressText">0%</span>
+        </div>
+        <div id="uploadError" class="error-message" style="display:none;"></div>
+        <button type="submit" id="uploadSubmit" class="btn btn-primary">Upload</button>
+      </form>
+    </section>
+
+    <!-- Video Feed -->
+    <section id="feed" class="feed"></section>
+
+    <!-- Load More -->
+    <div class="load-more-container">
+      <button id="loadMore" class="btn btn-secondary" style="display:none;">Load More</button>
+    </div>
+    <div id="feedLoading" class="loading" style="display:none;">Loading...</div>
+    <div id="feedEmpty" class="empty-message" style="display:none;">No videos found</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <span id="footerInstance">Instance: loading...</span>
+      <span id="footerMode">Mode: loading...</span>
+      <span class="footer-brand">ClipStream v1.0</span>
+    </div>
+  </footer>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
+

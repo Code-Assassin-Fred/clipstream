@@ -1,0 +1,32 @@
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+      - STORAGE_MODE=local
+      - LOCAL_DATA_DIR=/app/data
+      - AUTH_MODE=dev
+      - ENABLE_DEBUG_ENDPOINTS=true
+    volumes:
+      - clipstream-data:/app/data
+
+  api2:
+    build: .
+    ports:
+      - "3001:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+      - STORAGE_MODE=local
+      - LOCAL_DATA_DIR=/app/data
+      - AUTH_MODE=dev
+      - ENABLE_DEBUG_ENDPOINTS=true
+    volumes:
+      - clipstream-data:/app/data
+
+volumes:
+  clipstream-data:
+
