@@ -11,15 +11,25 @@
     "lint": "eslint src/ tests/",
     "seed": "node scripts/seed.js"
   },
-  "keywords": ["video", "sharing", "cloud-native", "express"],
+  "keywords": [
+    "video",
+    "sharing",
+    "cloud-native",
+    "express"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@azure/ai-language-text": "^1.1.0",
+    "@azure/cosmos": "^4.10.2",
+    "@azure/identity": "^4.14.1",
+    "@azure/storage-blob": "^12.34.0",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "express": "^4.21.0",
     "express-rate-limit": "^7.4.0",
     "helmet": "^7.1.0",
+    "microsoft-cognitiveservices-speech-sdk": "^1.53.0",
     "multer": "^1.4.5-lts.1",
     "uuid": "^10.0.0"
   },
@@ -30,4 +40,3 @@
     "supertest": "^7.0.0"
   }
 }
-

@@ -12,10 +12,18 @@ async function createCosmosMetadataStore(customCosmosClient = null) {
 
   if (!client) {
     const { CosmosClient } = require('@azure/cosmos');
-    client = new CosmosClient({
-      endpoint: config.cosmosEndpoint,
-      key: config.cosmosKey,
-    });
+    if (config.cosmosKey) {
+      client = new CosmosClient({
+        endpoint: config.cosmosEndpoint,
+        key: config.cosmosKey,
+      });
+    } else {
+      const { DefaultAzureCredential } = require('@azure/identity');
+      client = new CosmosClient({
+        endpoint: config.cosmosEndpoint,
+        aadCredentials: new DefaultAzureCredential(),
+      });
+    }
   }
 
   // Ensure database exists with shared 400 RU/s throughput (not per-container)

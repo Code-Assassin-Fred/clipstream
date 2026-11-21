@@ -13,7 +13,17 @@ async function createAzureBlobMediaStore(customBlobServiceClient = null) {
 
   if (!blobServiceClient) {
     const { BlobServiceClient } = require('@azure/storage-blob');
-    blobServiceClient = BlobServiceClient.fromConnectionString(config.azureStorageConnectionString);
+    if (config.azureStorageConnectionString) {
+      blobServiceClient = BlobServiceClient.fromConnectionString(config.azureStorageConnectionString);
+    } else if (config.azureStorageAccount) {
+      const { DefaultAzureCredential } = require('@azure/identity');
+      blobServiceClient = new BlobServiceClient(
+        `https://${config.azureStorageAccount}.blob.core.windows.net`,
+        new DefaultAzureCredential(),
+      );
+    } else {
+      blobServiceClient = BlobServiceClient.fromConnectionString('');
+    }
   }
 
   const containerClient = blobServiceClient.getContainerClient(config.azureBlobContainer);

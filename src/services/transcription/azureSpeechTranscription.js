@@ -25,6 +25,7 @@ function createAzureSpeechTranscription(customClient = null) {
       }
 
       try {
+        require('microsoft-cognitiveservices-speech-sdk');
         logger.info('Starting Azure Speech transcription for video', { videoId, mediaUrl });
         // Real implementation in Azure mode connects to Azure Speech Fast Transcription or Batch API
         return { text: `Transcribed audio content for video ${videoId}` };
