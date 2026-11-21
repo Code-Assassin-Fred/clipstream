@@ -18,8 +18,11 @@ async function createCosmosMetadataStore(customCosmosClient = null) {
     });
   }
 
-  // Ensure database and containers exist
-  const { database } = await client.databases.createIfNotExists({ id: config.cosmosDatabase });
+  // Ensure database exists with shared 400 RU/s throughput (not per-container)
+  const { database } = await client.databases.createIfNotExists(
+    { id: config.cosmosDatabase },
+    { throughput: 400 },
+  );
 
   const { container: videosContainer } = await database.containers.createIfNotExists({
     id: 'videos',

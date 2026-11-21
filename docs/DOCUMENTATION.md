@@ -143,6 +143,7 @@ clipstream/
 │   │   └── app.js                 # Vanilla JavaScript client application
 │   └── index.html                 # Single-page interface markup
 ├── scripts/
+│   ├── load.js                    # k6 load testing script with ramping stages
 │   └── seed.js                    # Sample dataset generator script
 ├── src/
 │   ├── middleware/

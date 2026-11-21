@@ -67,6 +67,17 @@ docker compose up --build
 - Instance 1: `http://localhost:3000`
 - Instance 2: `http://localhost:3001`
 
+### 3. Load Testing with k6
+
+Simulate concurrent traffic and autoscale CPU load:
+```bash
+# Run against local server:
+k6 run scripts/load.js
+
+# Or target deployed Azure Container App:
+BASE_URL=https://ca-clipstream-api.azurecontainerapps.io k6 run scripts/load.js
+```
+
 ---
 
 ## Testing & Quality

@@ -56,6 +56,22 @@ describe('Health and Info Endpoints', () => {
       expect(res.body).toHaveProperty('uptimeSeconds');
       expect(res.body).toHaveProperty('startedAt');
     });
+
+    test('returns process.env.APP_VERSION when set', async () => {
+      const prevVersion = process.env.APP_VERSION;
+      process.env.APP_VERSION = 'v2.5.0-cloud';
+      try {
+        const res = await request(app).get('/api/info');
+        expect(res.status).toBe(200);
+        expect(res.body.version).toBe('v2.5.0-cloud');
+      } finally {
+        if (prevVersion !== undefined) {
+          process.env.APP_VERSION = prevVersion;
+        } else {
+          delete process.env.APP_VERSION;
+        }
+      }
+    });
   });
 
   describe('Unknown API routes', () => {

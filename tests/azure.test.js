@@ -47,6 +47,7 @@ describe('Azure Cosmos Metadata Store (Mocked)', () => {
   let mockVideosContainer;
   let mockCommentsContainer;
   let mockLikesContainer;
+  let mockCosmosClient;
 
   beforeEach(async () => {
     mockVideosContainer = {
@@ -101,7 +102,7 @@ describe('Azure Cosmos Metadata Store (Mocked)', () => {
       },
     };
 
-    const mockCosmosClient = {
+    mockCosmosClient = {
       databases: {
         createIfNotExists: jest.fn().mockResolvedValue({ database: mockDatabase }),
       },
@@ -112,6 +113,10 @@ describe('Azure Cosmos Metadata Store (Mocked)', () => {
 
   test('creates video', async () => {
     const video = await store.createVideo({ id: 'v1', title: 'Cosmos Video' });
+    expect(mockCosmosClient.databases.createIfNotExists).toHaveBeenCalledWith(
+      { id: 'clipstream' },
+      { throughput: 400 },
+    );
     expect(video.id).toBe('v1');
     expect(mockVideosContainer.items.create).toHaveBeenCalled();
   });

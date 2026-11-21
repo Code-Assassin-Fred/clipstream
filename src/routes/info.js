@@ -14,7 +14,7 @@ router.get('/info', (_req, res) => {
   res.json({
     instanceId: config.instanceId,
     mode: config.storageMode,
-    version: pkg.version,
+    version: process.env.APP_VERSION || pkg.version,
     uptimeSeconds: Math.floor(process.uptime()),
     startedAt,
   });
