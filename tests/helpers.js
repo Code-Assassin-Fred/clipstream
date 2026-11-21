@@ -194,7 +194,7 @@ function createFakeServices() {
 /**
  * Create a test app with fake services
  */
-function createTestApp(overrides = {}) {
+function createTestApp(overrides = {}, options = {}) {
   const services = createFakeServices();
 
   // Apply any overrides to services
@@ -205,7 +205,7 @@ function createTestApp(overrides = {}) {
     Object.assign(services.transcription, overrides.transcription);
   }
 
-  const app = createApp(services);
+  const app = createApp(services, options);
   return { app, services };
 }
 

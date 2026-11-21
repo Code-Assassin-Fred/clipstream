@@ -5,6 +5,7 @@ const path = require('path');
 const helmet = require('helmet');
 const compression = require('compression');
 const cors = require('cors');
+const cookieSession = require('cookie-session');
 const { config } = require('./config');
 const { authMiddleware } = require('./middleware/auth');
 const requestLogger = require('./middleware/requestLogger');
@@ -13,17 +14,22 @@ const healthRoutes = require('./routes/health');
 const infoRoutes = require('./routes/info');
 const videoRoutes = require('./routes/videos');
 const commentRoutes = require('./routes/comments');
+const authRoutes = require('./routes/auth');
 
 /**
  * Create the Express application.
  * @param {Object} services — { media, metadata, sentiment, transcription }
+ * @param {Object} [options] — optional configurations (e.g. msalClient)
  * @returns {express.Application}
  */
-function createApp(services) {
+function createApp(services, options = {}) {
   const app = express();
 
-  // Store services for route handlers
+  // Store services and optional mock dependencies for route handlers
   app.locals.services = services;
+  if (options.msalClient) {
+    app.locals.msalClient = options.msalClient;
+  }
 
   // Trust proxy for rate limiting and logs behind Azure ingress
   app.set('trust proxy', 1);
@@ -52,8 +58,21 @@ function createApp(services) {
   // Body parsing
   app.use(express.json());
 
+  // Stateless signed cookie session (stateless across all replicas)
+  app.use(cookieSession({
+    name: 'clipstream_session',
+    keys: [config.sessionSecret],
+    maxAge: 8 * 60 * 60 * 1000, // 8-hour maxAge
+    httpOnly: true,
+    secure: config.isProduction,
+    sameSite: 'lax',
+  }));
+
   // Authentication — populates req.user
   app.use(authMiddleware);
+
+  // Authentication routes (/auth/login, /auth/callback, /auth/logout)
+  app.use('/auth', authRoutes);
 
   // Static files from public/ with cache headers
   app.use(express.static(path.join(__dirname, '..', 'public'), {
@@ -77,13 +96,12 @@ function createApp(services) {
   app.use(healthRoutes);
   app.use('/api', infoRoutes);
 
-  // GET /api/me — Current user info
+  // GET /api/me — Current user info (display name and ID only, never email)
   app.get('/api/me', (req, res) => {
     if (req.user) {
       res.json({
         id: req.user.id,
         name: req.user.name,
-        email: req.user.email,
       });
     } else {
       res.json(null);

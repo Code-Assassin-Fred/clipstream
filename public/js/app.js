@@ -30,6 +30,7 @@
   const myVideosLink = $('#myVideosLink');
   const userName = $('#userName');
   const signInLink = $('#signInLink');
+  const signOutLink = $('#signOutLink');
   const uploadForm = $('#uploadForm');
   const toggleUpload = $('#toggleUpload');
   const uploadProgress = $('#uploadProgress');
@@ -82,13 +83,15 @@
     try {
       currentUser = await api('/me');
       if (currentUser) {
-        userName.textContent = currentUser.name || currentUser.email;
+        userName.textContent = currentUser.name || '';
         signInLink.style.display = 'none';
+        if (signOutLink) signOutLink.style.display = '';
         myVideosLink.style.display = '';
         toggleUpload.style.display = '';
       } else {
         userName.textContent = '';
         signInLink.style.display = '';
+        if (signOutLink) signOutLink.style.display = 'none';
         myVideosLink.style.display = 'none';
         toggleUpload.style.display = 'none';
       }
@@ -226,7 +229,7 @@
             const viewEl = card.querySelector('.view-count');
             if (viewEl) viewEl.textContent = data.viewCount + ' views';
           })
-          .catch(() => {});
+          .catch(() => { });
       }
     });
 

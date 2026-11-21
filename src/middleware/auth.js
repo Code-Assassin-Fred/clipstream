@@ -4,11 +4,21 @@ const { config } = require('../config');
 
 /**
  * Populate req.user based on AUTH_MODE.
- * - dev: user from X-Dev-User header, or default dev user
+ * - entra: read session user stored by Entra auth code flow
  * - easyauth: read Azure Easy Auth headers
+ * - dev: user from X-Dev-User header, or default dev user
+ *
+ * The user object must never include the email address.
  */
 function authMiddleware(req, _res, next) {
-  if (config.authMode === 'easyauth') {
+  if (config.authMode === 'entra') {
+    if (req.session && req.session.user) {
+      req.user = {
+        id: req.session.user.id,
+        name: req.session.user.name,
+      };
+    }
+  } else if (config.authMode === 'easyauth') {
     const principalName = req.headers['x-ms-client-principal-name'];
     const principalId = req.headers['x-ms-client-principal-id'];
 
@@ -16,7 +26,6 @@ function authMiddleware(req, _res, next) {
       req.user = {
         id: principalId || principalName,
         name: principalName,
-        email: principalName,
       };
     }
     // If headers missing, req.user stays undefined (anonymous)
@@ -27,13 +36,11 @@ function authMiddleware(req, _res, next) {
       req.user = {
         id: devUser,
         name: devUser,
-        email: devUser,
       };
     } else {
       req.user = {
         id: 'dev@clipstream.local',
         name: 'Dev User',
-        email: 'dev@clipstream.local',
       };
     }
   }

@@ -33,8 +33,15 @@ const config = {
   azureSpeechKey: process.env.AZURE_SPEECH_KEY || '',
   azureSpeechRegion: process.env.AZURE_SPEECH_REGION || '',
 
-  // Authentication mode: 'dev' or 'easyauth'
+  // Authentication mode: 'dev', 'easyauth', or 'entra'
   authMode: process.env.AUTH_MODE || 'dev',
+
+  // Microsoft Entra ID (AUTH_MODE=entra)
+  entraTenantId: process.env.ENTRA_TENANT_ID || '',
+  entraClientId: process.env.ENTRA_CLIENT_ID || '',
+  entraClientSecret: process.env.ENTRA_CLIENT_SECRET || '',
+  sessionSecret: process.env.SESSION_SECRET || 'clipstream-dev-session-secret-key-change-in-prod',
+  publicBaseUrl: (process.env.PUBLIC_BASE_URL || 'http://localhost:3000').replace(/\/$/, ''),
 
   // Upload limits
   maxUploadMb: parseInt(process.env.MAX_UPLOAD_MB, 10) || 100,
