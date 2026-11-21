@@ -1,14 +1,13 @@
 // src/routes/auth.js — Microsoft Entra ID authentication routes
 
+const crypto = require('crypto');
 const express = require('express');
-const { v4: uuidv4 } = require('uuid');
 const { config } = require('../config');
 const logger = require('../logger');
 
 const router = express.Router();
 
-function getMsalClient(app, customClient = null) {
-  if (customClient) return customClient;
+function getMsalClient(app) {
   if (app && app.locals && app.locals.msalClient) return app.locals.msalClient;
 
   const msal = require('@azure/msal-node');
@@ -23,17 +22,32 @@ function getMsalClient(app, customClient = null) {
 }
 
 /**
+ * Save cookie-session and wait for it to commit before continuing.
+ * cookie-session patches res.end to write the Set-Cookie header, so we
+ * need the session middleware to run before we redirect.
+ */
+function commitSession(req) {
+  return new Promise((resolve) => {
+    if (req.session && typeof req.sessionOptions !== 'undefined') {
+      // cookie-session is synchronous — the cookie is written on res.end.
+      // Touching the session object ensures the cookie will be set.
+      req.session._ts = Date.now();
+    }
+    resolve();
+  });
+}
+
+/**
  * GET /auth/login — Redirect user to Entra ID authorization endpoint
  */
 router.get('/login', async (req, res, next) => {
   try {
-    const state = uuidv4();
-    const nonce = uuidv4();
+    const state = crypto.randomUUID();
+    const nonce = crypto.randomUUID();
 
-    if (req.session) {
-      req.session.authState = state;
-      req.session.authNonce = nonce;
-    }
+    // Store state and nonce in the session so callback can validate them
+    req.session.authState = state;
+    req.session.authNonce = nonce;
 
     const client = getMsalClient(req.app);
     const authCodeUrlParams = {
@@ -44,6 +58,10 @@ router.get('/login', async (req, res, next) => {
     };
 
     const authUrl = await client.getAuthCodeUrl(authCodeUrlParams);
+
+    // Commit session before redirect so the cookie is set
+    await commitSession(req);
+
     res.redirect(authUrl);
   } catch (err) {
     logger.error('Failed to generate Entra auth URL', { error: err.message });
@@ -65,6 +83,7 @@ router.get('/callback', async (req, res, next) => {
       });
     }
 
+    // Validate state
     if (!state || !req.session || req.session.authState !== state) {
       logger.warn('State mismatch or missing in auth callback', { state });
       return res.status(400).json({
@@ -72,18 +91,23 @@ router.get('/callback', async (req, res, next) => {
       });
     }
 
+    const savedNonce = req.session.authNonce;
+
     const client = getMsalClient(req.app);
     const tokenRequest = {
       code,
       scopes: ['openid', 'profile'],
       redirectUri: `${config.publicBaseUrl}/auth/callback`,
+      // Pass the same nonce used in getAuthCodeUrl so MSAL can validate it
+      nonce: savedNonce,
     };
 
     const tokenResponse = await client.acquireTokenByCode(tokenRequest);
 
-    // Validate nonce if present
-    if (tokenResponse.idTokenClaims && tokenResponse.idTokenClaims.nonce && req.session.authNonce) {
-      if (tokenResponse.idTokenClaims.nonce !== req.session.authNonce) {
+    // Double-check nonce in the id_token claims
+    if (tokenResponse.idTokenClaims && tokenResponse.idTokenClaims.nonce) {
+      if (tokenResponse.idTokenClaims.nonce !== savedNonce) {
+        logger.warn('Nonce mismatch in id_token claims');
         return res.status(400).json({
           error: { code: 'INVALID_NONCE', message: 'Nonce verification failed' },
         });
@@ -91,17 +115,25 @@ router.get('/callback', async (req, res, next) => {
     }
 
     // Store only id (oid claim) and name (display name) in session — never email
-    const oid = tokenResponse.idTokenClaims?.oid || tokenResponse.account?.homeAccountId || tokenResponse.idTokenClaims?.sub || 'entra-user';
-    const displayName = tokenResponse.idTokenClaims?.name || tokenResponse.account?.name || 'Entra User';
+    const oid = tokenResponse.idTokenClaims?.oid
+      || tokenResponse.account?.homeAccountId
+      || tokenResponse.idTokenClaims?.sub
+      || 'entra-user';
+    const displayName = tokenResponse.idTokenClaims?.name
+      || tokenResponse.account?.name
+      || 'Entra User';
 
     req.session.user = {
       id: oid,
       name: displayName,
     };
 
-    // Clean up temporary auth state
+    // Clear temporary auth state and nonce after successful exchange
     delete req.session.authState;
     delete req.session.authNonce;
+
+    // Commit session before redirect
+    await commitSession(req);
 
     res.redirect('/');
   } catch (err) {

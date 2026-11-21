@@ -26,7 +26,10 @@ describe('Health and Info Endpoints', () => {
       const prevReplica = process.env.CONTAINER_APP_REPLICA_NAME;
       process.env.CONTAINER_APP_REPLICA_NAME = 'ca-replica-xyz12';
       try {
-        const res = await request(app).get('/health');
+        jest.resetModules();
+        const { createTestApp: freshCreateTestApp } = require('./helpers');
+        const { app: freshApp } = freshCreateTestApp();
+        const res = await request(freshApp).get('/health');
         expect(res.headers['x-instance-id']).toBe('ca-replica-xyz12');
       } finally {
         if (prevReplica !== undefined) {
@@ -34,6 +37,7 @@ describe('Health and Info Endpoints', () => {
         } else {
           delete process.env.CONTAINER_APP_REPLICA_NAME;
         }
+        jest.resetModules();
       }
     });
   });
@@ -92,7 +96,10 @@ describe('Health and Info Endpoints', () => {
       const prevReplica = process.env.CONTAINER_APP_REPLICA_NAME;
       process.env.CONTAINER_APP_REPLICA_NAME = 'ca-replica-abc99';
       try {
-        const res = await request(app).get('/api/info');
+        jest.resetModules();
+        const { createTestApp: freshCreateTestApp } = require('./helpers');
+        const { app: freshApp } = freshCreateTestApp();
+        const res = await request(freshApp).get('/api/info');
         expect(res.status).toBe(200);
         expect(res.body.instanceId).toBe('ca-replica-abc99');
       } finally {
@@ -101,6 +108,26 @@ describe('Health and Info Endpoints', () => {
         } else {
           delete process.env.CONTAINER_APP_REPLICA_NAME;
         }
+        jest.resetModules();
+      }
+    });
+
+    test('instanceId has random suffix when CONTAINER_APP_REPLICA_NAME is not set', async () => {
+      const prevReplica = process.env.CONTAINER_APP_REPLICA_NAME;
+      delete process.env.CONTAINER_APP_REPLICA_NAME;
+      try {
+        jest.resetModules();
+        const { createTestApp: freshCreateTestApp } = require('./helpers');
+        const { app: freshApp } = freshCreateTestApp();
+        const res = await request(freshApp).get('/api/info');
+        expect(res.status).toBe(200);
+        // Should be hostname-xxxxxx (6 hex chars)
+        expect(res.body.instanceId).toMatch(/.+-[0-9a-f]{6}$/);
+      } finally {
+        if (prevReplica !== undefined) {
+          process.env.CONTAINER_APP_REPLICA_NAME = prevReplica;
+        }
+        jest.resetModules();
       }
     });
   });
@@ -113,4 +140,3 @@ describe('Health and Info Endpoints', () => {
     });
   });
 });
-

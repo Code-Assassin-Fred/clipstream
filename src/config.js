@@ -50,10 +50,17 @@ const config = {
   // Debug
   enableDebugEndpoints: process.env.ENABLE_DEBUG_ENDPOINTS === 'true',
 
-  // Instance identification: container replica name in Azure Container Apps, or hostname locally
-  get instanceId() {
-    return process.env.CONTAINER_APP_REPLICA_NAME || os.hostname();
-  },
+  // Instance identification: computed once at startup.
+  // In Azure Container Apps, use the unique replica name.
+  // Otherwise, use hostname + random 6-char suffix to distinguish identical hosts.
+  instanceId: (() => {
+    if (process.env.CONTAINER_APP_REPLICA_NAME) {
+      return process.env.CONTAINER_APP_REPLICA_NAME;
+    }
+    const crypto = require('crypto');
+    const suffix = crypto.randomBytes(3).toString('hex');
+    return `${os.hostname()}-${suffix}`;
+  })(),
 
   // Derived
   get maxUploadBytes() {

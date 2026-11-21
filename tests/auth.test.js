@@ -102,12 +102,14 @@ describe('Authentication Middleware', () => {
             `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=mock-client-id&state=${params.state}&nonce=${params.nonce}`,
           );
         }),
-        acquireTokenByCode: jest.fn().mockImplementation(() => {
+        acquireTokenByCode: jest.fn().mockImplementation((params) => {
+          // Echo the nonce back in idTokenClaims so MSAL nonce validation passes
           return Promise.resolve({
             account: { homeAccountId: 'oid-98765', name: 'Jane Contoso' },
             idTokenClaims: {
               oid: 'oid-98765',
               name: 'Jane Contoso',
+              nonce: params.nonce,
               preferred_username: 'jane@contoso.com', // Must be omitted from session/user
             },
           });
@@ -160,6 +162,26 @@ describe('Authentication Middleware', () => {
       expect(meRes.body.id).toBe('oid-98765');
       expect(meRes.body.name).toBe('Jane Contoso');
       expect(meRes.body.email).toBeUndefined();
+    });
+
+    test('nonce passed to acquireTokenByCode matches the one from login redirect', async () => {
+      const agent = request.agent(app);
+
+      // Step 1: Login — capture nonce from the redirect URL
+      const loginRes = await agent.get('/auth/login');
+      const nonceMatch = loginRes.headers.location.match(/nonce=([^&]+)/);
+      expect(nonceMatch).toBeTruthy();
+      const loginNonce = nonceMatch[1];
+
+      const stateMatch = loginRes.headers.location.match(/state=([^&]+)/);
+      const state = stateMatch[1];
+
+      // Step 2: Callback
+      await agent.get(`/auth/callback?code=mock-auth-code&state=${state}`);
+
+      // Step 3: Verify the nonce passed to acquireTokenByCode is the same one
+      const tokenReqArg = mockMsalClient.acquireTokenByCode.mock.calls[0][0];
+      expect(tokenReqArg.nonce).toBe(loginNonce);
     });
 
     test('GET /auth/callback rejects state mismatch with 400', async () => {
